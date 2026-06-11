@@ -1,0 +1,32 @@
+# SiteScribe SwiftLint configuration (M0)
+included:
+  - Packages
+  - App
+  - AppTests
+excluded:
+  - .build
+  - DerivedData
+  - SiteScribe.xcodeproj
+
+opt_in_rules:
+  - empty_count
+  - closure_spacing
+  - contains_over_first_not_nil
+  - fatal_error_message
+  - file_header
+
+line_length:
+  warning: 120
+  error: 160
+file_length:
+  warning: 600
+  error: 800
+function_body_length:
+  warning: 50
+  error: 60
+type_body_length:
+  warning: 300
+  error: 400
+identifier_name:
+  min_length: 2
+  max_length: 50

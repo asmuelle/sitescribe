@@ -1,0 +1,5 @@
+[
+  { "kind": "modelNumber", "rawValue": "ML180UH090P36B", "normalizedValue": "ML180UH090P36B", "parserID": "model-v1" },
+  { "kind": "serialNumber", "rawValue": "5817F00921", "normalizedValue": "5817F00921", "parserID": "serial-v1" },
+  { "kind": "date", "rawValue": "2017-11-02", "normalizedValue": "2017-11-02", "parserID": "date-v1" }
+]

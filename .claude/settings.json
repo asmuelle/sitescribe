@@ -1,0 +1,34 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(just:*)",
+      "Bash(xcodebuild:*)",
+      "Bash(xcrun:*)",
+      "Bash(swift:*)",
+      "Bash(swiftformat:*)",
+      "Bash(swiftlint:*)",
+      "Bash(xcodegen:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)"
+    ],
+    "deny": []
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "f=$(jq -r '.tool_input.file_path // empty'); case \"$f\" in *.swift) command -v swiftformat >/dev/null 2>&1 && swiftformat \"$f\" >/dev/null 2>&1 ;; esac; exit 0"
+          },
+          {
+            "type": "command",
+            "command": "f=$(jq -r '.tool_input.file_path // empty'); case \"$f\" in *.swift) command -v swiftlint >/dev/null 2>&1 && swiftlint lint --quiet \"$f\" 2>/dev/null | head -10 ;; esac; exit 0"
+          }
+        ]
+      }
+    ]
+  }
+}

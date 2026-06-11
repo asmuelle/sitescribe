@@ -1,0 +1,4 @@
+[
+  { "kind": "meterValue", "rawValue": "032451 CCF", "normalizedValue": "032451 CCF", "parserID": "meter-v1" },
+  { "kind": "serialNumber", "rawValue": "GM-558812", "normalizedValue": "GM-558812", "parserID": "serial-v1" }
+]

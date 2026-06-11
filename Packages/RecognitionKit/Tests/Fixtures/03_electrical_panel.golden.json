@@ -1,0 +1,4 @@
+[
+  { "kind": "modelNumber", "rawValue": "QO124M100", "normalizedValue": "QO124M100", "parserID": "model-v1" },
+  { "kind": "serialNumber", "rawValue": "LC2201456789", "normalizedValue": "LC2201456789", "parserID": "serial-v1" }
+]

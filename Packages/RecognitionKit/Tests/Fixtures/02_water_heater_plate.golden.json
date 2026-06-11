@@ -1,0 +1,5 @@
+[
+  { "kind": "modelNumber", "rawValue": "XE40M06ST45U1", "normalizedValue": "XE40M06ST45U1", "parserID": "model-v1" },
+  { "kind": "serialNumber", "rawValue": "Q341812345", "normalizedValue": "Q341812345", "parserID": "serial-v1" },
+  { "kind": "meterValue", "rawValue": "40 GAL", "normalizedValue": "40 gal", "parserID": "meter-v1" }
+]

@@ -1,0 +1,68 @@
+# XcodeGen spec — DESIGN.md milestone M0.
+# App target SiteScribe, iOS 26 deployment target, local SPM umbrella package.
+name: SiteScribe
+
+options:
+  bundleIdPrefix: com.sitescribe
+  createIntermediateGroups: true
+  deploymentTarget:
+    iOS: "26.0"
+
+packages:
+  SiteScribeCore:
+    path: .
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    SWIFT_STRICT_CONCURRENCY: complete
+
+targets:
+  SiteScribe:
+    type: application
+    platform: iOS
+    deploymentTarget: "26.0"
+    sources:
+      - App/Sources
+    dependencies:
+      - package: SiteScribeCore
+        products:
+          - DesignSystem
+          - StorageKit
+          - RecognitionKit
+          - ExtractionKit
+          - ReportKit
+          - CaptureKit
+          - SyncKit
+          - JobsFeature
+          - CaptureFeature
+          - ReviewFeature
+          - ReportFeature
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.sitescribe.app
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+        CODE_SIGN_STYLE: Automatic
+        TARGETED_DEVICE_FAMILY: "1"
+
+schemes:
+  SiteScribe:
+    build:
+      targets:
+        SiteScribe: all
+    test:
+      gatherCoverageData: true
+      targets:
+        - package: SiteScribeCore/ReportKitTests
+        - package: SiteScribeCore/RecognitionKitTests
+        - package: SiteScribeCore/ExtractionKitTests
+        - package: SiteScribeCore/StorageKitTests
+        - package: SiteScribeCore/CaptureKitTests
+        - package: SiteScribeCore/SyncKitTests
+        - package: SiteScribeCore/DesignSystemTests
+        - package: SiteScribeCore/JobsFeatureTests
+        - package: SiteScribeCore/CaptureFeatureTests
+        - package: SiteScribeCore/ReviewFeatureTests
+        - package: SiteScribeCore/ReportFeatureTests

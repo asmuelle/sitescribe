@@ -1,0 +1,4 @@
+[
+  { "kind": "modelNumber", "rawValue": "4TTR4036L1000A", "normalizedValue": "4TTR4036L1000A", "parserID": "model-v1" },
+  { "kind": "serialNumber", "rawValue": "16213ABC4D", "normalizedValue": "16213ABC4D", "parserID": "serial-v1" }
+]

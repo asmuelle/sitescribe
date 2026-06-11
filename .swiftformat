@@ -1,0 +1,11 @@
+# SiteScribe swiftformat configuration
+--swiftversion 6.0
+--indent 4
+--maxwidth 120
+--wraparguments before-first
+--wrapcollections before-first
+--stripunusedargs closure-only
+--self remove
+--importgrouping testable-bottom
+--header strip
+--exclude .build,DerivedData,SiteScribe.xcodeproj

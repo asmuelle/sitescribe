@@ -1,0 +1,5 @@
+[
+  { "kind": "modelNumber", "rawValue": "58STA070-12", "normalizedValue": "58STA070-12", "parserID": "model-v1" },
+  { "kind": "serialNumber", "rawValue": "4517A23456", "normalizedValue": "4517A23456", "parserID": "serial-v1" },
+  { "kind": "date", "rawValue": "2014-03-18", "normalizedValue": "2014-03-18", "parserID": "date-v1" }
+]

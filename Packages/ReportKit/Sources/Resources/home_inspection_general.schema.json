@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Finding",
+  "type": "object",
+  "required": ["defect", "location", "severity", "recommendedAction"],
+  "properties": {
+    "defect": {
+      "type": "string",
+      "description": "What is wrong, stated factually (e.g. 'Corrosion on heat exchanger')."
+    },
+    "location": {
+      "type": "string",
+      "description": "Where in the property the defect was observed."
+    },
+    "severity": {
+      "type": "string",
+      "enum": ["info", "minor", "moderate", "major", "safetyHazard"],
+      "description": "Severity classification on the fixed five-step scale."
+    },
+    "recommendedAction": {
+      "type": "string",
+      "description": "What the inspector recommends (evaluate, repair, replace, monitor)."
+    }
+  }
+}

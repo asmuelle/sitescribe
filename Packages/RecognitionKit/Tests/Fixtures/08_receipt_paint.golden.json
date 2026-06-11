@@ -1,0 +1,6 @@
+[
+  { "kind": "date", "rawValue": "04/02/2026", "normalizedValue": "2026-04-02", "parserID": "date-v1" },
+  { "kind": "price", "rawValue": "$6.79", "normalizedValue": "6.79 USD", "parserID": "price-v1" },
+  { "kind": "price", "rawValue": "$4.50", "normalizedValue": "4.50 USD", "parserID": "price-v1" },
+  { "kind": "price", "rawValue": "$11.29", "normalizedValue": "11.29 USD", "parserID": "price-v1" }
+]
