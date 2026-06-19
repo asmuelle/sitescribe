@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SiteScribe — Field reports that write themselves, even with zero signal</title>
+<meta name="description" content="SiteScribe is an offline AI field-documentation copilot for inspectors, adjusters and field techs. Photograph, dictate and auto-generate structured inspection reports on-device at signal-zero — syncs when coverage returns." />
+<meta name="theme-color" content="#13161b" />
+
+<!-- Open Graph -->
+<meta property="og:type" content="website" />
+<meta property="og:title" content="SiteScribe — Field reports that write themselves, even with zero signal" />
+<meta property="og:description" content="An offline AI field-documentation copilot. Photograph, dictate and auto-generate structured inspection reports on-device — syncs when coverage returns." />
+<meta property="og:site_name" content="SiteScribe" />
+<meta property="og:locale" content="en_US" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="SiteScribe — Field reports that write themselves, even with zero signal" />
+<meta name="twitter:description" content="Offline AI field documentation that works at signal-zero. Syncs when coverage returns." />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+<style>
+  :root {
+    /* base — slate / graphite / concrete */
+    --c-void: #0d0f13;
+    --c-graphite: #13161b;
+    --c-slate: #1b1f27;
+    --c-slate-2: #232833;
+    --c-line: #2e333d;
+    --c-line-soft: #262b34;
+    --c-concrete: #3a414d;
+
+    /* text */
+    --c-text: #eef1f5;
+    --c-text-dim: #aab2bf;
+    --c-text-faint: #707887;
+
+    /* hi-vis safety accent — amber/yellow (committed) */
+    --c-hi: #ffd21f;
+    --c-hi-deep: #f5b400;
+    --c-hi-ink: #161200;      /* dark ink for text ON amber — AA safe */
+
+    /* semantic */
+    --c-ok: #4ade80;
+    --c-warn: #ffb020;
+    --c-bad: #ff6b5e;
+
+    /* type */
+    --ff-sans: "IBM Plex Sans", system-ui, -apple-system, sans-serif;
+    --ff-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+    --text-hero: clamp(2.5rem, 1.1rem + 6vw, 5.75rem);
+    --text-h2: clamp(1.75rem, 1.1rem + 2.6vw, 3rem);
+    --text-h3: clamp(1.15rem, 1rem + 0.6vw, 1.4rem);
+    --text-base: clamp(1rem, 0.96rem + 0.2vw, 1.075rem);
+
+    /* rhythm */
+    --space-section: clamp(4rem, 3rem + 6vw, 8.5rem);
+    --radius: 14px;
+    --radius-sm: 9px;
+
+    --dur: 280ms;
+    --dur-fast: 160ms;
+    --ease: cubic-bezier(0.16, 1, 0.3, 1);
+
+    --maxw: 1200px;
+    --shadow: 0 1px 0 rgba(255,255,255,.03) inset, 0 22px 50px -28px rgba(0,0,0,.85);
+  }
+
+  * { box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+  body {
+    margin: 0;
+    font-family: var(--ff-sans);
+    font-size: var(--text-base);
+    line-height: 1.6;
+    color: var(--c-text);
+    background: var(--c-graphite);
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+    /* engineered grid texture */
+    background-image:
+      linear-gradient(rgba(255,255,255,.018) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,.018) 1px, transparent 1px);
+    background-size: 56px 56px, 56px 56px;
+    background-position: -1px -1px;
+  }
+
+  h1, h2, h3 { line-height: 1.08; letter-spacing: -0.02em; margin: 0; font-weight: 700; }
+  p { margin: 0; }
+  a { color: inherit; text-decoration: none; }
+
+  .wrap { max-width: var(--maxw); margin-inline: auto; padding-inline: clamp(1.1rem, 4vw, 2.5rem); }
+
+  .eyebrow {
+    font-family: var(--ff-mono);
+    font-size: .72rem;
+    font-weight: 600;
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    color: var(--c-hi-deep);
+    display: inline-flex;
+    align-items: center;
+    gap: .55rem;
+  }
+  .eyebrow::before {
+    content: "";
+    width: 22px; height: 2px; background: var(--c-hi); display: inline-block;
+  }
+
+  /* hazard tape divider motif */
+  .hazard {
+    height: 8px;
+    background-image: repeating-linear-gradient(
+      -45deg, var(--c-hi) 0 16px, var(--c-graphite) 16px 32px
+    );
+    opacity: .9;
+  }
+
+  /* ---------- header ---------- */
+  header {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(13,15,19,.78);
+    backdrop-filter: saturate(150%) blur(12px);
+    border-bottom: 1px solid var(--c-line-soft);
+  }
+  .nav {
+    display: flex; align-items: center; justify-content: space-between;
+    height: 66px; gap: 1rem;
+  }
+  .brand { display: flex; align-items: center; gap: .65rem; font-weight: 700; letter-spacing: -.02em; font-size: 1.15rem; }
+  .brand .mark {
+    width: 30px; height: 30px; border-radius: 7px;
+    background: var(--c-hi); color: var(--c-hi-ink);
+    display: grid; place-items: center; flex: none;
+    box-shadow: 0 0 0 1px rgba(0,0,0,.25), 0 6px 16px -8px var(--c-hi-deep);
+  }
+  .nav-links { display: flex; gap: 1.6rem; align-items: center; }
+  .nav-links a {
+    font-size: .92rem; color: var(--c-text-dim); font-weight: 500;
+    transition: color var(--dur-fast) var(--ease);
+  }
+  .nav-links a:hover, .nav-links a:focus-visible { color: var(--c-text); }
+  @media (max-width: 760px) { .nav-links a:not(.btn) { display: none; } }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: .5rem;
+    font-family: var(--ff-sans); font-weight: 600; font-size: .95rem;
+    padding: .68rem 1.15rem; border-radius: 9px; cursor: pointer;
+    border: 1px solid transparent;
+    transition: transform var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
+  }
+  .btn-primary {
+    background: var(--c-hi); color: var(--c-hi-ink);
+    box-shadow: 0 10px 26px -12px var(--c-hi-deep);
+  }
+  .btn-primary:hover, .btn-primary:focus-visible { background: var(--c-hi-deep); transform: translateY(-2px); }
+  .btn-primary:active { transform: translateY(0); }
+  .btn-ghost { border-color: var(--c-line); color: var(--c-text); background: var(--c-slate); }
+  .btn-ghost:hover, .btn-ghost:focus-visible { border-color: var(--c-concrete); background: var(--c-slate-2); transform: translateY(-2px); }
+  .btn:focus-visible { outline: 3px solid var(--c-hi); outline-offset: 2px; }
+
+  a:focus-visible { outline: 3px solid var(--c-hi); outline-offset: 3px; border-radius: 4px; }
+
+  /* store badge */
+  .store-badge {
+    display: inline-flex; align-items: center; gap: .7rem;
+    padding: .6rem 1.1rem .6rem .85rem;
+    border: 1px solid var(--c-line); border-radius: 11px;
+    background: linear-gradient(180deg, var(--c-slate-2), var(--c-slate));
+    color: var(--c-text);
+    transition: transform var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
+  }
+  .store-badge:hover, .store-badge:focus-visible { transform: translateY(-2px); border-color: var(--c-concrete); }
+  .store-badge small { display: block; font-size: .62rem; letter-spacing: .12em; text-transform: uppercase; color: var(--c-text-faint); font-family: var(--ff-mono); }
+  .store-badge strong { font-size: 1.02rem; font-weight: 600; letter-spacing: -.01em; }
+
+  /* ---------- hero ---------- */
+  .hero { position: relative; padding-top: clamp(3rem, 2rem + 4vw, 5.5rem); padding-bottom: var(--space-section); }
+  .hero::before {
+    content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+    background:
+      radial-gradient(70% 55% at 85% -5%, rgba(255,210,31,.10), transparent 60%),
+      radial-gradient(60% 50% at 0% 100%, rgba(58,65,77,.4), transparent 70%);
+  }
+  .hero-grid {
+    display: grid; grid-template-columns: 1.05fr 0.95fr; gap: clamp(2rem, 4vw, 4rem);
+    align-items: center;
+  }
+  @media (max-width: 960px) { .hero-grid { grid-template-columns: 1fr; } }
+
+  .hero h1 { font-size: var(--text-hero); margin-top: 1.4rem; }
+  .hero h1 .hi { color: var(--c-hi); }
+  .hero-sub { font-size: clamp(1.05rem, 1rem + .4vw, 1.3rem); color: var(--c-text-dim); margin-top: 1.4rem; max-width: 38ch; }
+  .hero-cta { display: flex; flex-wrap: wrap; gap: .85rem; margin-top: 2rem; align-items: center; }
+  .hero-note { font-family: var(--ff-mono); font-size: .78rem; color: var(--c-text-faint); margin-top: 1.1rem; }
+  .hero-note b { color: var(--c-text-dim); font-weight: 500; }
+
+  /* stat strip */
+  .stat-strip {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    border: 1px solid var(--c-line-soft); border-radius: var(--radius);
+    margin-top: 2.6rem; overflow: hidden; background: rgba(27,31,39,.5);
+  }
+  .stat-strip .s { padding: 1rem 1.1rem; border-right: 1px solid var(--c-line-soft); }
+  .stat-strip .s:last-child { border-right: 0; }
+  .stat-strip .n { font-family: var(--ff-mono); font-weight: 600; font-size: clamp(1.3rem, 1rem + 1.5vw, 1.9rem); color: var(--c-hi); letter-spacing: -.01em; }
+  .stat-strip .l { font-size: .76rem; color: var(--c-text-faint); text-transform: uppercase; letter-spacing: .08em; }
+  @media (max-width: 520px) {
+    .stat-strip { grid-template-columns: 1fr; }
+    .stat-strip .s { border-right: 0; border-bottom: 1px solid var(--c-line-soft); }
+    .stat-strip .s:last-child { border-bottom: 0; }
+  }
+
+  /* ---------- device / report card visual ---------- */
+  .device {
+    position: relative;
+    border: 1px solid var(--c-line);
+    border-radius: 20px;
+    background: linear-gradient(180deg, var(--c-slate-2), var(--c-slate));
+    box-shadow: var(--shadow);
+    padding: 14px;
+  }
+  .device-screen {
+    border-radius: 13px; background: var(--c-void); border: 1px solid var(--c-line-soft);
+    padding: 16px 16px 18px; position: relative; overflow: hidden;
+  }
+  .screen-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .no-signal {
+    display: inline-flex; align-items: center; gap: .5rem;
+    font-family: var(--ff-mono); font-size: .68rem; font-weight: 600; letter-spacing: .1em;
+    padding: .32rem .6rem; border-radius: 999px;
+    background: rgba(255,210,31,.12); color: var(--c-hi); border: 1px solid rgba(255,210,31,.35);
+  }
+  .pulse-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--c-hi); animation: pulse 2.4s var(--ease) infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: .35; transform: scale(.7); } }
+  .clock { font-family: var(--ff-mono); font-size: .72rem; color: var(--c-text-faint); }
+
+  .rpt-title { font-size: .95rem; font-weight: 600; }
+  .rpt-meta { font-family: var(--ff-mono); font-size: .68rem; color: var(--c-text-faint); margin-top: 2px; }
+
+  .field {
+    margin-top: 11px; padding: 9px 11px; border-radius: 9px;
+    background: var(--c-slate); border: 1px solid var(--c-line-soft);
+    display: grid; grid-template-columns: 1fr auto; gap: 4px 8px; align-items: baseline;
+  }
+  .field .k { font-family: var(--ff-mono); font-size: .64rem; letter-spacing: .08em; text-transform: uppercase; color: var(--c-text-faint); grid-column: 1 / -1; }
+  .field .v { font-size: .9rem; font-weight: 500; }
+  .chip {
+    font-family: var(--ff-mono); font-size: .62rem; font-weight: 600; letter-spacing: .04em;
+    padding: .16rem .45rem; border-radius: 5px; white-space: nowrap;
+  }
+  .chip.hi { background: rgba(74,222,128,.14); color: var(--c-ok); border: 1px solid rgba(74,222,128,.3); }
+  .chip.med { background: rgba(255,176,32,.14); color: var(--c-warn); border: 1px solid rgba(255,176,32,.3); }
+  .prov { font-family: var(--ff-mono); font-size: .6rem; color: var(--c-text-faint); grid-column: 1 / -1; display: flex; align-items: center; gap: .35rem; }
+  .prov svg { flex: none; }
+
+  .sync-bar {
+    margin-top: 13px; display: flex; align-items: center; gap: .55rem;
+    font-family: var(--ff-mono); font-size: .68rem; color: var(--c-text-dim);
+    padding-top: 11px; border-top: 1px dashed var(--c-line);
+  }
+  .sync-bar .q { color: var(--c-hi); }
+
+  /* scan plate badge floating */
+  .scan-plate {
+    position: absolute; right: -16px; bottom: 38px; width: 168px;
+    border: 1px solid var(--c-line); border-radius: 11px; overflow: hidden;
+    background: var(--c-graphite); box-shadow: var(--shadow);
+  }
+  @media (max-width: 460px) { .scan-plate { display: none; } }
+
+  /* ---------- generic section ---------- */
+  section { position: relative; }
+  .section-pad { padding-block: var(--space-section); }
+  .section-head { max-width: 56ch; }
+  .section-head h2 { font-size: var(--text-h2); margin-top: 1rem; }
+  .section-head p { color: var(--c-text-dim); margin-top: 1rem; font-size: 1.1rem; }
+
+  /* offline argument band */
+  .offline-band { background: var(--c-void); border-block: 1px solid var(--c-line-soft); }
+  .offline-grid { display: grid; grid-template-columns: 1.1fr 1fr; gap: clamp(2rem, 4vw, 4rem); align-items: center; }
+  @media (max-width: 880px) { .offline-grid { grid-template-columns: 1fr; } }
+  .vs {
+    display: grid; gap: 12px;
+  }
+  .vs-card {
+    border: 1px solid var(--c-line-soft); border-radius: var(--radius); padding: 1.1rem 1.2rem;
+    background: var(--c-slate); display: flex; gap: 1rem; align-items: flex-start;
+  }
+  .vs-card .ico { flex: none; width: 40px; height: 40px; border-radius: 9px; display: grid; place-items: center; }
+  .vs-card.bad .ico { background: rgba(255,107,94,.12); color: var(--c-bad); border: 1px solid rgba(255,107,94,.28); }
+  .vs-card.good { border-color: rgba(255,210,31,.35); background: linear-gradient(180deg, rgba(255,210,31,.05), var(--c-slate)); }
+  .vs-card.good .ico { background: var(--c-hi); color: var(--c-hi-ink); }
+  .vs-card h3 { font-size: 1.05rem; }
+  .vs-card p { color: var(--c-text-dim); font-size: .95rem; margin-top: .3rem; }
+
+  /* ---------- features ---------- */
+  .feat-grid {
+    display: grid; grid-template-columns: repeat(6, 1fr); gap: 16px; margin-top: 3rem;
+  }
+  .card {
+    border: 1px solid var(--c-line-soft); border-radius: var(--radius);
+    background: linear-gradient(180deg, var(--c-slate-2), var(--c-slate));
+    padding: 1.5rem; position: relative; overflow: hidden;
+    transition: transform var(--dur) var(--ease), border-color var(--dur) var(--ease);
+  }
+  .card:hover { transform: translateY(-4px); border-color: var(--c-concrete); }
+  .card::after {
+    content: ""; position: absolute; inset: 0; opacity: 0; pointer-events: none;
+    background: radial-gradient(60% 60% at 100% 0%, rgba(255,210,31,.08), transparent 70%);
+    transition: opacity var(--dur) var(--ease);
+  }
+  .card:hover::after { opacity: 1; }
+  .card .tag { font-family: var(--ff-mono); font-size: .64rem; letter-spacing: .12em; text-transform: uppercase; color: var(--c-text-faint); }
+  .card h3 { font-size: var(--text-h3); margin-top: .8rem; }
+  .card p { color: var(--c-text-dim); margin-top: .55rem; font-size: .96rem; }
+  .card-ico {
+    width: 46px; height: 46px; border-radius: 10px; display: grid; place-items: center;
+    background: rgba(255,210,31,.1); color: var(--c-hi); border: 1px solid rgba(255,210,31,.25);
+    margin-bottom: .2rem;
+  }
+  .col-3 { grid-column: span 3; }
+  .col-2 { grid-column: span 2; }
+  @media (max-width: 880px) { .col-3, .col-2 { grid-column: span 6; } }
+  @media (min-width: 881px) and (max-width: 1100px) {
+    .feat-grid { grid-template-columns: repeat(2, 1fr); }
+    .col-3, .col-2 { grid-column: span 1; }
+  }
+
+  /* feature mini-visuals */
+  .ocr-line { display: flex; align-items: center; gap: .5rem; margin-top: .9rem; font-family: var(--ff-mono); font-size: .74rem; }
+  .ocr-line .scan-tag { background: var(--c-void); border: 1px solid var(--c-line); padding: .2rem .5rem; border-radius: 6px; color: var(--c-text-dim); position: relative; }
+  .ocr-line .arrow { color: var(--c-hi); }
+  .ocr-line .out { color: var(--c-text); }
+
+  .waveform { display: flex; align-items: flex-end; gap: 3px; height: 34px; margin-top: 1rem; }
+  .waveform span { flex: 1; background: var(--c-concrete); border-radius: 2px; }
+  .waveform span.on { background: var(--c-hi); }
+
+  /* ---------- how it works ---------- */
+  .steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-top: 3rem; counter-reset: step; }
+  @media (max-width: 880px) { .steps { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 520px) { .steps { grid-template-columns: 1fr; } }
+  .step {
+    border: 1px solid var(--c-line-soft); border-radius: var(--radius); padding: 1.4rem;
+    background: var(--c-slate); position: relative;
+  }
+  .step .num {
+    font-family: var(--ff-mono); font-weight: 600; font-size: .8rem;
+    width: 34px; height: 34px; border-radius: 8px; display: grid; place-items: center;
+    background: var(--c-hi); color: var(--c-hi-ink); margin-bottom: 1rem;
+  }
+  .step h3 { font-size: 1.05rem; }
+  .step p { color: var(--c-text-dim); font-size: .92rem; margin-top: .45rem; }
+  .step .when { font-family: var(--ff-mono); font-size: .66rem; letter-spacing: .08em; text-transform: uppercase; color: var(--c-hi-deep); margin-top: .8rem; }
+
+  /* ---------- who it's for ---------- */
+  .who-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 3rem; }
+  @media (max-width: 880px) { .who-grid { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 460px) { .who-grid { grid-template-columns: 1fr; } }
+  .who {
+    border: 1px solid var(--c-line-soft); border-radius: var(--radius); padding: 1.3rem;
+    background: var(--c-slate); transition: border-color var(--dur) var(--ease), transform var(--dur) var(--ease);
+  }
+  .who:hover { border-color: var(--c-concrete); transform: translateY(-3px); }
+  .who .who-ico { color: var(--c-hi); margin-bottom: .9rem; }
+  .who h3 { font-size: 1.02rem; }
+  .who p { color: var(--c-text-dim); font-size: .9rem; margin-top: .4rem; }
+
+  /* ---------- pricing ---------- */
+  .pricing-band { background: var(--c-void); border-block: 1px solid var(--c-line-soft); }
+  .price-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 3rem; align-items: stretch; }
+  @media (max-width: 880px) { .price-grid { grid-template-columns: 1fr; max-width: 460px; margin-inline: auto; } }
+  .plan {
+    border: 1px solid var(--c-line); border-radius: var(--radius);
+    background: linear-gradient(180deg, var(--c-slate-2), var(--c-slate));
+    padding: 1.7rem; display: flex; flex-direction: column;
+  }
+  .plan.feature { border-color: var(--c-hi); box-shadow: 0 24px 60px -34px var(--c-hi-deep); position: relative; }
+  .plan.feature::before {
+    content: "MOST CHOSEN"; position: absolute; top: -1px; right: 1.3rem; transform: translateY(-50%);
+    font-family: var(--ff-mono); font-size: .6rem; font-weight: 600; letter-spacing: .14em;
+    background: var(--c-hi); color: var(--c-hi-ink); padding: .25rem .6rem; border-radius: 5px;
+  }
+  .plan .pname { font-family: var(--ff-mono); font-size: .74rem; letter-spacing: .14em; text-transform: uppercase; color: var(--c-text-faint); }
+  .plan .pprice { font-size: 2.6rem; font-weight: 700; letter-spacing: -.03em; margin-top: .9rem; line-height: 1; }
+  .plan .pprice small { font-size: .92rem; font-weight: 500; color: var(--c-text-faint); font-family: var(--ff-mono); }
+  .plan .pdesc { color: var(--c-text-dim); font-size: .92rem; margin-top: .5rem; }
+  .plan ul { list-style: none; padding: 0; margin: 1.3rem 0 1.6rem; display: grid; gap: .7rem; }
+  .plan li { display: flex; gap: .6rem; font-size: .92rem; color: var(--c-text-dim); }
+  .plan li svg { flex: none; color: var(--c-hi); margin-top: 3px; }
+  .plan .btn { width: 100%; justify-content: center; margin-top: auto; }
+  .plan.free { background: var(--c-slate); }
+
+  /* ---------- faq ---------- */
+  .faq-list { margin-top: 2.6rem; display: grid; gap: 12px; max-width: 820px; }
+  details {
+    border: 1px solid var(--c-line-soft); border-radius: var(--radius-sm);
+    background: var(--c-slate); overflow: hidden;
+    transition: border-color var(--dur-fast) var(--ease);
+  }
+  details[open] { border-color: var(--c-concrete); }
+  summary {
+    cursor: pointer; padding: 1.1rem 1.3rem; font-weight: 600; font-size: 1.02rem;
+    display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+    list-style: none;
+  }
+  summary::-webkit-details-marker { display: none; }
+  summary .plus { flex: none; color: var(--c-hi); font-family: var(--ff-mono); transition: transform var(--dur-fast) var(--ease); }
+  details[open] summary .plus { transform: rotate(45deg); }
+  summary:focus-visible { outline: 3px solid var(--c-hi); outline-offset: -3px; }
+  details p { padding: 0 1.3rem 1.2rem; color: var(--c-text-dim); font-size: .96rem; }
+  details .ans-yes { color: var(--c-hi); font-weight: 600; }
+
+  /* ---------- final cta ---------- */
+  .final {
+    border: 1px solid var(--c-line); border-radius: 20px;
+    background:
+      radial-gradient(80% 120% at 100% 0%, rgba(255,210,31,.12), transparent 55%),
+      linear-gradient(180deg, var(--c-slate-2), var(--c-slate));
+    padding: clamp(2.2rem, 2rem + 3vw, 4rem); text-align: center;
+    box-shadow: var(--shadow); position: relative; overflow: hidden;
+  }
+  .final h2 { font-size: var(--text-h2); max-width: 18ch; margin-inline: auto; }
+  .final p { color: var(--c-text-dim); margin-top: 1rem; max-width: 46ch; margin-inline: auto; }
+  .final .hero-cta { justify-content: center; }
+
+  /* ---------- footer ---------- */
+  footer { border-top: 1px solid var(--c-line-soft); margin-top: var(--space-section); padding-block: 3rem 2.4rem; }
+  .foot-grid { display: flex; flex-wrap: wrap; gap: 2rem; justify-content: space-between; align-items: flex-start; }
+  .foot-brand { max-width: 30ch; }
+  .foot-brand p { color: var(--c-text-faint); font-size: .9rem; margin-top: .8rem; }
+  .foot-cols { display: flex; gap: 3rem; flex-wrap: wrap; }
+  .foot-col h4 { font-family: var(--ff-mono); font-size: .68rem; letter-spacing: .14em; text-transform: uppercase; color: var(--c-text-faint); font-weight: 600; margin-bottom: .9rem; }
+  .foot-col a { display: block; color: var(--c-text-dim); font-size: .92rem; padding: .25rem 0; transition: color var(--dur-fast) var(--ease); }
+  .foot-col a:hover, .foot-col a:focus-visible { color: var(--c-text); }
+  .foot-bottom {
+    margin-top: 2.5rem; padding-top: 1.6rem; border-top: 1px solid var(--c-line-soft);
+    display: flex; flex-wrap: wrap; gap: .8rem 1.5rem; justify-content: space-between; align-items: center;
+    font-size: .82rem; color: var(--c-text-faint); font-family: var(--ff-mono);
+  }
+
+  /* scroll reveal */
+  .reveal { opacity: 0; transform: translateY(22px); transition: opacity .7s var(--ease), transform .7s var(--ease); }
+  .reveal.in { opacity: 1; transform: none; }
+  @media (prefers-reduced-motion: reduce) {
+    .reveal { opacity: 1; transform: none; transition: none; }
+    .pulse-dot { animation: none; }
+    .btn, .card, .who, .store-badge { transition: none; }
+  }
+
+  .skip {
+    position: absolute; left: -999px; top: 0; z-index: 100;
+    background: var(--c-hi); color: var(--c-hi-ink); padding: .7rem 1.1rem; border-radius: 0 0 8px 0; font-weight: 600;
+  }
+  .skip:focus { left: 0; }
+</style>
+</head>
+<body>
+<a href="#main" class="skip">Skip to content</a>
+
+<header>
+  <div class="wrap">
+    <nav class="nav" aria-label="Main navigation">
+      <a href="#top" class="brand" aria-label="SiteScribe home">
+        <span class="mark" aria-hidden="true">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16"/><path d="M6 16l5-9 3 6 2-3 2 6"/></svg>
+        </span>
+        SiteScribe
+      </a>
+      <div class="nav-links">
+        <a href="#offline">Why offline</a>
+        <a href="#features">Features</a>
+        <a href="#how">How it works</a>
+        <a href="#pricing">Pricing</a>
+        <a href="#cta" class="btn btn-primary">Start free</a>
+      </div>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+  <span id="top"></span>
+
+  <!-- ===================== HERO ===================== -->
+  <section class="hero" aria-labelledby="hero-heading">
+    <div class="wrap hero-grid">
+      <div>
+        <p class="eyebrow">Offline AI field copilot</p>
+        <h1 id="hero-heading">Field reports that <span class="hi">write themselves</span> — even with zero signal.</h1>
+        <p class="hero-sub">Photograph, dictate, and auto-generate structured inspection reports on-device. SiteScribe drafts the paperwork while you work — then syncs when coverage returns.</p>
+        <div class="hero-cta">
+          <a href="#" class="store-badge" aria-label="Coming to the App Store">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.5 2c.1 1.2-.4 2.4-1.1 3.2-.8.9-2 1.6-3.1 1.5-.1-1.2.4-2.4 1.1-3.2C14.2 2.6 15.5 2 16.5 2zm3.4 15.5c-.5 1.2-.8 1.7-1.5 2.7-1 1.5-2.4 3.3-4.1 3.3-1.5 0-1.9-1-4-1-2 0-2.5 1-4 1-1.7 0-3-1.6-4-3.1-2.8-4.1-3-9-1.3-11.5 1.2-1.8 3-2.8 4.8-2.8 1.8 0 2.9 1 4.4 1 1.4 0 2.3-1 4.4-1 1.6 0 3.3.9 4.5 2.4-3.9 2.2-3.3 7.8.3 9z"/></svg>
+            <span><small>Coming to the</small><strong>App Store</strong></span>
+          </a>
+          <a href="#how" class="btn btn-ghost">See how it works</a>
+        </div>
+        <p class="hero-note"><b>100% on-device.</b> No cloud round-trip. No spinner when the work happens.</p>
+
+        <div class="stat-strip" role="list">
+          <div class="s" role="listitem"><div class="n">0 bars</div><div class="l">Required to work</div></div>
+          <div class="s" role="listitem"><div class="n">30–60 min</div><div class="l">Saved per job</div></div>
+          <div class="s" role="listitem"><div class="n">100%</div><div class="l">Offline capture</div></div>
+        </div>
+      </div>
+
+      <!-- device / report visual -->
+      <div class="reveal in" aria-hidden="true">
+        <div class="device">
+          <div class="device-screen">
+            <div class="screen-top">
+              <span class="no-signal"><span class="pulse-dot"></span>NO SIGNAL · OFFLINE</span>
+              <span class="clock">07:42</span>
+            </div>
+            <div class="rpt-title">Inspection — Basement, Panel B</div>
+            <div class="rpt-meta">REPORT #4471 · 132 Rural Route 9</div>
+
+            <div class="field">
+              <span class="k">Defect</span>
+              <span class="v">Corroded neutral lug</span>
+              <span class="chip hi">99% conf</span>
+              <span class="prov"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>From photo IMG_204 · on-device OCR</span>
+            </div>
+
+            <div class="field">
+              <span class="k">Serial / model</span>
+              <span class="v">SQ-D QO-130 · 48820-117</span>
+              <span class="chip hi">97% conf</span>
+              <span class="prov"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 6v12M8 6v12M12 6v12M16 6v12M20 6v12"/></svg>Serial plate scan + barcode</span>
+            </div>
+
+            <div class="field">
+              <span class="k">Severity</span>
+              <span class="v">High — recommend replacement</span>
+              <span class="chip med">Review</span>
+              <span class="prov"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 18h18M6 14l4-6 3 4 2-3 4 5"/></svg>From voice note · transcribed offline</span>
+            </div>
+
+            <div class="sync-bar">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M21 12a9 9 0 0 1-9 9m-9-9a9 9 0 0 1 9-9"/><path d="M21 3v6h-6M3 21v-6h6"/></svg>
+              Draft saved locally · <span class="q">syncs when coverage returns</span>
+            </div>
+
+            <div class="scan-plate">
+              <svg viewBox="0 0 168 96" width="168" height="96" role="img" aria-label="Serial plate OCR scan">
+                <rect width="168" height="96" fill="#0d0f13"/>
+                <rect x="10" y="10" width="148" height="76" rx="6" fill="#1b1f27" stroke="#2e333d"/>
+                <text x="20" y="30" font-family="IBM Plex Mono, monospace" font-size="9" fill="#707887">MODEL</text>
+                <text x="20" y="44" font-family="IBM Plex Mono, monospace" font-size="11" fill="#eef1f5">QO-130-CP</text>
+                <text x="20" y="62" font-family="IBM Plex Mono, monospace" font-size="9" fill="#707887">S/N</text>
+                <text x="20" y="76" font-family="IBM Plex Mono, monospace" font-size="11" fill="#eef1f5">48820-117</text>
+                <rect x="14" y="14" width="36" height="2" fill="#ffd21f"/>
+                <rect x="14" y="14" width="2" height="20" fill="#ffd21f"/>
+                <rect x="118" y="80" width="36" height="2" fill="#ffd21f"/>
+                <rect x="152" y="62" width="2" height="20" fill="#ffd21f"/>
+                <rect x="10" y="46" width="148" height="14" fill="#ffd21f" opacity="0.12"/>
+                <rect x="10" y="52" width="148" height="2" fill="#ffd21f" opacity="0.7"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="hazard" aria-hidden="true"></div>
+
+  <!-- ===================== OFFLINE ARGUMENT ===================== -->
+  <section class="offline-band section-pad" id="offline" aria-labelledby="offline-heading">
+    <div class="wrap offline-grid">
+      <div class="section-head reveal">
+        <p class="eyebrow">The work happens where the signal doesn't</p>
+        <h2 id="offline-heading">Every cloud copilot shows a spinner exactly when you need it.</h2>
+        <p>Basements. Rural routes. Industrial buildings. Crawl spaces and meter rooms. The places you actually inspect are dead zones for an entire shift — and that's precisely where cloud-dependent tools fall over.</p>
+        <p>SiteScribe runs entirely on-device. It reads tags, plates, meters and receipts, transcribes your walk-through notes, and drafts the report — with no bars required.</p>
+      </div>
+      <div class="vs reveal">
+        <div class="vs-card bad">
+          <span class="ico" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M2 8.8C6 5 11 4 16 5.5M5 12.5C8 10 12 9.5 15 10.8M8.5 16c1.5-1 3.5-1.2 5-.4M12 20h.01"/><path d="M3 3l18 18"/></svg>
+          </span>
+          <div>
+            <h3>Cloud copilot, no signal</h3>
+            <p>Upload fails. The model never runs. You fall back to scribbling on paper and re-typing it tonight.</p>
+          </div>
+        </div>
+        <div class="vs-card good">
+          <span class="ico" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+          </span>
+          <div>
+            <h3>SiteScribe, no signal</h3>
+            <p>On-device OCR, transcription and report drafting run instantly. The completed draft is waiting before you reach the truck.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== FEATURES ===================== -->
+  <section class="section-pad" id="features" aria-labelledby="features-heading">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <p class="eyebrow">What it does on-site</p>
+        <h2 id="features-heading">A field copilot built for the conditions you actually work in.</h2>
+      </div>
+
+      <div class="feat-grid">
+        <article class="card col-3 reveal">
+          <div class="card-ico" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3.5"/></svg>
+          </div>
+          <p class="tag">Photo → fields</p>
+          <h3>On-device OCR &amp; barcode capture</h3>
+          <p>Snap an equipment tag, serial plate, meter reading or receipt. SiteScribe reads the values directly into your report — no upload, no connection.</p>
+          <div class="ocr-line">
+            <span class="scan-tag">S/N 48820-117</span>
+            <span class="arrow">→</span>
+            <span class="out">Serial: 48820-117</span>
+          </div>
+        </article>
+
+        <article class="card col-3 reveal">
+          <div class="card-ico" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v4"/></svg>
+          </div>
+          <p class="tag">Voice → text, offline</p>
+          <h3>Offline voice notes</h3>
+          <p>Talk through the walk-through hands-free. Transcription runs locally and maps your observations straight into the report — gloves and hard hat on.</p>
+          <div class="waveform" aria-hidden="true">
+            <span style="height:30%"></span><span class="on" style="height:70%"></span><span style="height:45%"></span><span class="on" style="height:100%"></span><span style="height:60%"></span><span class="on" style="height:85%"></span><span style="height:40%"></span><span style="height:75%"></span><span class="on" style="height:55%"></span><span style="height:90%"></span><span style="height:35%"></span><span class="on" style="height:65%"></span>
+          </div>
+        </article>
+
+        <article class="card col-2 reveal">
+          <div class="card-ico" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></svg>
+          </div>
+          <p class="tag">Structured drafts</p>
+          <h3>Report-schema drafts</h3>
+          <p>Output isn't a wall of text — it's your fields: defect, location, severity, recommended action. Ready to finalize.</p>
+        </article>
+
+        <article class="card col-2 reveal">
+          <div class="card-ico" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l8 4v5c0 5-3.5 8.5-8 11-4.5-2.5-8-6-8-11V6z"/><path d="M9 12l2 2 4-4"/></svg>
+          </div>
+          <p class="tag">Trust layer</p>
+          <h3>Provenance &amp; confidence</h3>
+          <p>Every extracted field shows its source and a confidence score. You confirm or edit before finalizing — safe for liability-bearing documents.</p>
+        </article>
+
+        <article class="card col-2 reveal">
+          <div class="card-ico" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+          </div>
+          <p class="tag">Local search</p>
+          <h3>Search past reports</h3>
+          <p>"What did I flag at this property last visit?" Search every prior job locally — answers in the field, no connection needed.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <div class="hazard" aria-hidden="true"></div>
+
+  <!-- ===================== HOW IT WORKS ===================== -->
+  <section class="section-pad" id="how" aria-labelledby="how-heading">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <p class="eyebrow">From capture to billable PDF</p>
+        <h2 id="how-heading">Four steps. Most of them happen before you have a single bar.</h2>
+      </div>
+
+      <ol class="steps" style="list-style:none; padding:0;">
+        <li class="step reveal">
+          <span class="num">01</span>
+          <h3>Capture offline</h3>
+          <p>Photograph plates and defects, dictate notes, scan receipts — all stored on-device.</p>
+          <p class="when">No signal needed</p>
+        </li>
+        <li class="step reveal">
+          <span class="num">02</span>
+          <h3>On-device draft</h3>
+          <p>OCR, transcription and your report schema run locally to assemble a structured draft.</p>
+          <p class="when">No signal needed</p>
+        </li>
+        <li class="step reveal">
+          <span class="num">03</span>
+          <h3>Review &amp; confirm</h3>
+          <p>Check each field's source and confidence, edit anything, and sign off with confidence.</p>
+          <p class="when">No signal needed</p>
+        </li>
+        <li class="step reveal">
+          <span class="num">04</span>
+          <h3>Sync &amp; export</h3>
+          <p>Back in coverage, reports sync automatically. Export clean PDF + CSV for billing and records.</p>
+          <p class="when">When coverage returns</p>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- ===================== WHO IT'S FOR ===================== -->
+  <section class="section-pad" id="who" aria-labelledby="who-heading" style="padding-top:0;">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <p class="eyebrow">Built for people who bill by the report</p>
+        <h2 id="who-heading">If your job site is a dead zone, this is for you.</h2>
+      </div>
+
+      <div class="who-grid">
+        <article class="who reveal">
+          <div class="who-ico" aria-hidden="true">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21V8l9-5 9 5v13"/><path d="M9 21v-6h6v6M9 11h.01M15 11h.01"/></svg>
+          </div>
+          <h3>Home &amp; building inspectors</h3>
+          <p>Crawl spaces, attics and panel rooms — draft the report room by room, finalize in the truck.</p>
+        </article>
+        <article class="who reveal">
+          <div class="who-ico" aria-hidden="true">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          </div>
+          <h3>Insurance adjusters</h3>
+          <p>Capture loss detail with provenance and confidence baked in — defensible documentation, every claim.</p>
+        </article>
+        <article class="who reveal">
+          <div class="who-ico" aria-hidden="true">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h7l-1 8 10-12h-7z"/></svg>
+          </div>
+          <h3>Utility &amp; telecom techs</h3>
+          <p>Read meters and serial plates underground or on remote routes where coverage simply isn't there.</p>
+        </article>
+        <article class="who reveal">
+          <div class="who-ico" aria-hidden="true">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 1-5.4 5.4L4 17v3h3l5.3-5.3a4 4 0 0 1 5.4-5.4l-2.4 2.4-2-2 2.4-2.4z"/></svg>
+          </div>
+          <h3>Solo trade contractors</h3>
+          <p>Stop losing 30–60 unbillable minutes per job to paperwork. Bill the completed report, not the rewrite.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== PRICING ===================== -->
+  <section class="pricing-band section-pad" id="pricing" aria-labelledby="pricing-heading">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <p class="eyebrow">Per-seat pricing</p>
+        <h2 id="pricing-heading">Priced like a tool, not a subscription trap.</h2>
+        <p>Start free, then pick the seat that fits. Annual billing available.</p>
+      </div>
+
+      <div class="price-grid">
+        <article class="plan free reveal">
+          <p class="pname">Trial</p>
+          <div class="pprice">Free<small> / to start</small></div>
+          <p class="pdesc">Run a full job offline and export your first reports before you commit.</p>
+          <ul>
+            <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Full offline capture</li>
+            <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> On-device drafts</li>
+            <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> PDF + CSV export</li>
+          </ul>
+          <a href="#" class="btn btn-ghost">Start free</a>
+        </article>
+
+        <article class="plan feature reveal">
+          <p class="pname">Solo</p>
+          <div class="pprice">$16.99<small> /mo</small></div>
+          <p class="pdesc">For the independent inspector, adjuster or contractor billing by the report.</p>
+          <ul>
+            <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Everything in Trial</li>
+            <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Unlimited reports &amp; local search</li>
+            <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Provenance &amp; confidence review</li>
+            <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Auto-sync when coverage returns</li>
+          </ul>
+          <a href="#cta" class="btn btn-primary">Choose Solo</a>
+        </article>
+
+        <article class="plan reveal">
+          <p class="pname">Teams</p>
+          <div class="pprice">$24.99<small> /user · mo</small></div>
+          <p class="pdesc">For crews running shared schemas, records and reporting standards.</p>
+          <ul>
+            <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Everything in Solo</li>
+            <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Shared report schemas</li>
+            <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Team record library</li>
+            <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Seat management &amp; billing</li>
+          </ul>
+          <a href="#cta" class="btn btn-ghost">Choose Teams</a>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== FAQ ===================== -->
+  <section class="section-pad" id="faq" aria-labelledby="faq-heading">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <p class="eyebrow">Straight answers</p>
+        <h2 id="faq-heading">The questions field crews actually ask.</h2>
+      </div>
+
+      <div class="faq-list">
+        <details class="reveal" open>
+          <summary>Does it work with no internet? <span class="plus" aria-hidden="true">+</span></summary>
+          <p><span class="ans-yes">Yes — fully offline.</span> Photo OCR, barcode reads, voice transcription and report drafting all run on-device. SiteScribe needs zero bars to capture, draft, review and search your work.</p>
+        </details>
+        <details class="reveal">
+          <summary>When does it sync? <span class="plus" aria-hidden="true">+</span></summary>
+          <p>Automatically, when coverage returns. Everything is saved locally first; the moment you're back in signal, drafts and finalized reports sync in the background — no manual upload step.</p>
+        </details>
+        <details class="reveal">
+          <summary>Can I trust the extracted data on a liability document? <span class="plus" aria-hidden="true">+</span></summary>
+          <p>Every field shows its provenance (which photo or voice note it came from) and a confidence score. Nothing is finalized until you confirm or edit it — so the report you sign is the report you reviewed.</p>
+        </details>
+        <details class="reveal">
+          <summary>What can I export? <span class="plus" aria-hidden="true">+</span></summary>
+          <p>Clean PDF for the client or claim file, and CSV for your records and billing systems. Both generate on-device and are ready the moment your draft is approved.</p>
+        </details>
+        <details class="reveal">
+          <summary>What does it read from a photo? <span class="plus" aria-hidden="true">+</span></summary>
+          <p>Equipment tags, serial plates, model and meter values, barcodes, and receipts — mapped into your report schema as defect, location, severity and recommended action.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== FINAL CTA ===================== -->
+  <section class="section-pad" id="cta" aria-labelledby="cta-heading" style="padding-top:0;">
+    <div class="wrap">
+      <div class="final reveal">
+        <p class="eyebrow" style="justify-content:center; display:inline-flex;">Get the unbillable hour back</p>
+        <h2 id="cta-heading">Walk out with the report already written.</h2>
+        <p>Stop re-typing field notes at 9pm. Let SiteScribe draft the paperwork on-site — even when there's no signal for miles.</p>
+        <div class="hero-cta">
+          <a href="#" class="store-badge" aria-label="Coming to the App Store">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.5 2c.1 1.2-.4 2.4-1.1 3.2-.8.9-2 1.6-3.1 1.5-.1-1.2.4-2.4 1.1-3.2C14.2 2.6 15.5 2 16.5 2zm3.4 15.5c-.5 1.2-.8 1.7-1.5 2.7-1 1.5-2.4 3.3-4.1 3.3-1.5 0-1.9-1-4-1-2 0-2.5 1-4 1-1.7 0-3-1.6-4-3.1-2.8-4.1-3-9-1.3-11.5 1.2-1.8 3-2.8 4.8-2.8 1.8 0 2.9 1 4.4 1 1.4 0 2.3-1 4.4-1 1.6 0 3.3.9 4.5 2.4-3.9 2.2-3.3 7.8.3 9z"/></svg>
+            <span><small>Coming to the</small><strong>App Store</strong></span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer aria-labelledby="footer-heading">
+  <h2 id="footer-heading" class="skip">Footer</h2>
+  <div class="wrap">
+    <div class="foot-grid">
+      <div class="foot-brand">
+        <a href="#top" class="brand" aria-label="SiteScribe home">
+          <span class="mark" aria-hidden="true">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16"/><path d="M6 16l5-9 3 6 2-3 2 6"/></svg>
+          </span>
+          SiteScribe
+        </a>
+        <p>The offline AI field-documentation copilot. Capture and draft at signal-zero, sync when coverage returns.</p>
+      </div>
+      <div class="foot-cols">
+        <div class="foot-col">
+          <h4>Product</h4>
+          <a href="#features">Features</a>
+          <a href="#how">How it works</a>
+          <a href="#pricing">Pricing</a>
+          <a href="#faq">FAQ</a>
+        </div>
+        <div class="foot-col">
+          <h4>Built for</h4>
+          <a href="#who">Inspectors</a>
+          <a href="#who">Adjusters</a>
+          <a href="#who">Field techs</a>
+          <a href="#who">Contractors</a>
+        </div>
+        <div class="foot-col">
+          <h4>Company</h4>
+          <a href="#">About</a>
+          <a href="#">Privacy</a>
+          <a href="#">Terms</a>
+          <a href="#">Contact</a>
+        </div>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <span>© 2026 SiteScribe. All rights reserved.</span>
+      <span>100% on-device · Offline-first · iOS</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+  (function () {
+    var prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var els = document.querySelectorAll('.reveal');
+    if (prefersReduced || !('IntersectionObserver' in window)) {
+      els.forEach(function (el) { el.classList.add('in'); });
+      return;
+    }
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('in');
+          io.unobserve(entry.target);
+        }
+      });
+    }, { rootMargin: '0px 0px -8% 0px', threshold: 0.08 });
+    els.forEach(function (el) { io.observe(el); });
+  })();
+</script>
+</body>
+</html>
