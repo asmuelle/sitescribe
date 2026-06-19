@@ -7,13 +7,20 @@
 <meta name="description" content="SiteScribe is an offline AI field-documentation copilot for inspectors, adjusters and field techs. Photograph, dictate and auto-generate structured inspection reports on-device at signal-zero — syncs when coverage returns." />
 <meta name="theme-color" content="#13161b" />
 
+<!-- Favicon — slate rounded square with amber clipboard/report mark (inline SVG) -->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2313161b'/%3E%3Crect x='18' y='14' width='28' height='36' rx='4' fill='none' stroke='%23ffd21f' stroke-width='3'/%3E%3Crect x='26' y='10' width='12' height='8' rx='2' fill='%23ffd21f'/%3E%3Cpath d='M24 28h16M24 35h16M24 42h10' stroke='%23ffd21f' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E" />
+
 <!-- Open Graph -->
 <meta property="og:type" content="website" />
 <meta property="og:title" content="SiteScribe — Field reports that write themselves, even with zero signal" />
 <meta property="og:description" content="An offline AI field-documentation copilot. Photograph, dictate and auto-generate structured inspection reports on-device — syncs when coverage returns." />
 <meta property="og:site_name" content="SiteScribe" />
 <meta property="og:locale" content="en_US" />
+<meta property="og:image" content="og.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
 <meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image" content="og.png" />
 <meta name="twitter:title" content="SiteScribe — Field reports that write themselves, even with zero signal" />
 <meta name="twitter:description" content="Offline AI field documentation that works at signal-zero. Syncs when coverage returns." />
 
@@ -375,8 +382,11 @@
 
   /* ---------- pricing ---------- */
   .pricing-band { background: var(--c-void); border-block: 1px solid var(--c-line-soft); }
-  .price-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 3rem; align-items: stretch; }
-  @media (max-width: 880px) { .price-grid { grid-template-columns: 1fr; max-width: 460px; margin-inline: auto; } }
+  .price-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin-top: 3rem; align-items: stretch; }
+  @media (max-width: 1080px) { .price-grid { grid-template-columns: repeat(2, 1fr); max-width: 760px; margin-inline: auto; } }
+  @media (max-width: 560px) { .price-grid { grid-template-columns: 1fr; max-width: 460px; } }
+  .price-foot { font-family: var(--ff-mono); font-size: .78rem; color: var(--c-text-faint); margin-top: 1.6rem; text-align: center; }
+  .price-foot b { color: var(--c-text-dim); font-weight: 500; }
   .plan {
     border: 1px solid var(--c-line); border-radius: var(--radius);
     background: linear-gradient(180deg, var(--c-slate-2), var(--c-slate));
@@ -461,6 +471,8 @@
   }
   .skip:focus { left: 0; }
 </style>
+<script data-goatcounter="https://asmuelle.goatcounter.com/count"
+        async src="//gc.zgo.at/count.js"></script>
 </head>
 <body>
 <a href="#main" class="skip">Skip to content</a>
@@ -760,43 +772,58 @@
 
       <div class="price-grid">
         <article class="plan free reveal">
-          <p class="pname">Trial</p>
-          <div class="pprice">Free<small> / to start</small></div>
-          <p class="pdesc">Run a full job offline and export your first reports before you commit.</p>
+          <p class="pname">Free</p>
+          <div class="pprice">$0<small> /mo</small></div>
+          <p class="pdesc">Run real jobs offline and export your first reports before you commit.</p>
           <ul>
+            <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Up to 10 AI-extracted documents / month</li>
             <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Full offline capture</li>
-            <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> On-device drafts</li>
             <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> PDF + CSV export</li>
           </ul>
           <a href="#" class="btn btn-ghost">Start free</a>
         </article>
 
-        <article class="plan feature reveal">
+        <article class="plan reveal">
           <p class="pname">Solo</p>
           <div class="pprice">$16.99<small> /mo</small></div>
-          <p class="pdesc">For the independent inspector, adjuster or contractor billing by the report.</p>
+          <p class="pdesc">For solo contractors &amp; inspectors billing by the report. Or $149 / year.</p>
           <ul>
-            <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Everything in Trial</li>
+            <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Everything in Free</li>
+            <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Unlimited AI-extracted documents</li>
             <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Unlimited reports &amp; local search</li>
             <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Provenance &amp; confidence review</li>
-            <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Auto-sync when coverage returns</li>
           </ul>
-          <a href="#cta" class="btn btn-primary">Choose Solo</a>
+          <a href="#cta" class="btn btn-ghost">Choose Solo</a>
         </article>
 
-        <article class="plan reveal">
-          <p class="pname">Teams</p>
-          <div class="pprice">$24.99<small> /user · mo</small></div>
-          <p class="pdesc">For crews running shared schemas, records and reporting standards.</p>
+        <article class="plan feature reveal">
+          <p class="pname">Team</p>
+          <div class="pprice">$34.99<small> /user · mo</small></div>
+          <p class="pdesc">For crews running shared schemas and standards. $29 / user billed annually.</p>
           <ul>
             <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Everything in Solo</li>
             <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Shared report schemas</li>
             <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Team record library</li>
             <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Seat management &amp; billing</li>
           </ul>
-          <a href="#cta" class="btn btn-ghost">Choose Teams</a>
+          <a href="#cta" class="btn btn-primary">Choose Team</a>
+        </article>
+
+        <article class="plan reveal">
+          <p class="pname">Firm</p>
+          <div class="pprice">$49<small> /user · mo</small></div>
+          <p class="pdesc">For organizations that need shared standards, branding and oversight.</p>
+          <ul>
+            <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Everything in Team</li>
+            <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Shared template library</li>
+            <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Report branding</li>
+            <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Admin &amp; audit controls</li>
+          </ul>
+          <a href="#cta" class="btn btn-ghost">Choose Firm</a>
         </article>
       </div>
+
+      <p class="price-foot reveal"><b>Low-volume firm?</b> Per-report pricing available at $2–3 per published report.</p>
     </div>
   </section>
 
