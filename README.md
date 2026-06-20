@@ -1,5 +1,7 @@
 # SiteScribe
 
+[![CI](https://github.com/asmuelle/sitescribe/actions/workflows/ci.yml/badge.svg)](https://github.com/asmuelle/sitescribe/actions/workflows/ci.yml)
+
 > Offline AI field-documentation copilot: photograph, dictate, and auto-generate structured inspection reports, receipts, and job records at zero signal, syncing when coverage returns.
 
 **Category:** Edge AI / on-device inference (iOS + Android) ·
