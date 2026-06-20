@@ -117,12 +117,14 @@ public struct PriceParser: FieldParser {
 public struct DateParser: FieldParser {
     public let id = "date-v1"
     public let kind = ArtifactKind.date
-    private static var isoPattern: Regex<(Substring, Substring, Substring, Substring)> {
-        /\b(\d{4})-(\d{2})-(\d{2})\b/
-    }
 
-    private static var usPattern: Regex<(Substring, Substring, Substring, Substring)> {
-        /\b(\d{1,2})\/(\d{1,2})\/(\d{4})\b/
+    /// The three calendar components a date pattern captures, plus the matched text.
+    /// Replaces the positional regex output tuple so call sites read by name.
+    private struct DateFields {
+        let raw: String
+        let year: String
+        let month: String
+        let day: String
     }
 
     public init() {}
@@ -132,27 +134,30 @@ public struct DateParser: FieldParser {
     }
 
     private func isoArtifacts(in block: OCRBlock) -> [RecognizedArtifact] {
-        block.text.matches(of: Self.isoPattern).compactMap { match in
-            guard let normalized = Self.isoDate(
-                year: String(match.1), month: String(match.2), day: String(match.3)
-            ) else { return nil }
-            return artifact(raw: String(match.0), normalized: normalized, block: block)
+        // Regex literal kept local so its inferred four-member output tuple is never
+        // written out (which would be a large tuple); captures are named via DateFields.
+        let isoPattern = /\b(\d{4})-(\d{2})-(\d{2})\b/
+        return block.text.matches(of: isoPattern).map { match in
+            DateFields(raw: String(match.0), year: String(match.1), month: String(match.2), day: String(match.3))
         }
+        .compactMap { artifact(from: $0, block: block) }
     }
 
     private func usArtifacts(in block: OCRBlock) -> [RecognizedArtifact] {
-        block.text.matches(of: Self.usPattern).compactMap { match in
-            guard let normalized = Self.isoDate(
-                year: String(match.3), month: String(match.1), day: String(match.2)
-            ) else { return nil }
-            return artifact(raw: String(match.0), normalized: normalized, block: block)
+        let usPattern = /\b(\d{1,2})\/(\d{1,2})\/(\d{4})\b/
+        return block.text.matches(of: usPattern).map { match in
+            DateFields(raw: String(match.0), year: String(match.3), month: String(match.1), day: String(match.2))
         }
+        .compactMap { artifact(from: $0, block: block) }
     }
 
-    private func artifact(raw: String, normalized: String, block: OCRBlock) -> RecognizedArtifact {
-        RecognizedArtifact(
+    private func artifact(from fields: DateFields, block: OCRBlock) -> RecognizedArtifact? {
+        guard let normalized = Self.isoDate(year: fields.year, month: fields.month, day: fields.day) else {
+            return nil
+        }
+        return RecognizedArtifact(
             kind: kind,
-            rawValue: raw,
+            rawValue: fields.raw,
             normalizedValue: normalized,
             parserID: id,
             confidence: block.confidence,
