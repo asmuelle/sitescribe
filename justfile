@@ -72,5 +72,9 @@ format:
     fi
     swiftformat .
 
+# verify formatting (swiftformat --lint); CI gate
+format-check:
+    swiftformat --lint .
+
 # Full local gate: lint + build + test (what CI runs once bootstrapped)
-ci: lint build test
+ci: lint build test format-check
